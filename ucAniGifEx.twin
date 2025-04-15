@@ -1,13 +1,13 @@
-[Description("ucAniGifEx Animated Gif Control v1.0")]
+[Description("ucAniGifEx Animated Gif Control v1.1")]
 [FormDesignerId("2AC43A6D-210E-4973-A545-D35D383E2084")]
 [ClassId("F5130EB4-C963-4B8A-8A4F-7972701B2936")]
 [InterfaceId("E2B98344-1A48-4653-8F7F-33EEDB48CC24")]
 [EventInterfaceId("9F7B29F0-0707-4577-93C2-87980E742B38")]
 [COMControl]
-Class ucAniGifEx
+Public Class ucAniGifEx
 Option Explicit
 /********************************************************************************
-    ucAniGifEx v1.0.1
+    ucAniGifEx v1.1.3
     by Jon Johnson, ported from Windows SDK WicAnimatedGif example, with
          corrections, additional features, and conversion to control.
     (c) 2025. Distributed under the MIT License.
@@ -32,8 +32,10 @@ Option Explicit
               resources. Specify the ID and group; LoadResData is used.
          DisplayGifFromMemory - Play direct from a byte array containing a 
               complete gif file.
+         DisplayGifFromURL - Play from an http:, https:, or ftp: resource.
       
-      -Paused property can stop/resume playback, StopPlayback command
+      -Paused property can suspend/resume playback, StopPlayback, 
+          ResetPlayback commands.
       
       -Will be transparent to the control BackColor; it's recommended you set
        this before playing, i.e. ucAniGifEx1.BackColor = Me.BackColor, then play.
@@ -54,6 +56,8 @@ Option Explicit
       
       -FrameCount, FrameIndex, ImageWidth, ImageHeight properties.
     
+      -Supports DPI Aware apps
+      
     Requirements:
       Windows 7 or newer
       
@@ -62,6 +66,11 @@ Option Explicit
       does not seem to be impacting the control. A bug report has been filed.
       
     Change log: 
+      (15 Apr 2025, v1.1.3)
+          -Added DisplayGifFromURL to play from http: https: and ftp:
+          -Added Click and DblClick events
+          -Added ResetPlayback method to restart animation from first frame.
+          
       (09 Apr 2025, v1.0.1)
           -To match modern browsers, gifs without looping info will only play once.
           -Bug fix: Loop control override not properly implemented.
@@ -79,6 +88,9 @@ Option Explicit
 Public Event LoopEnd(ByVal totalPlayed As Long)
 Public Event PlaybackEnd()
 Public Event FrameStep(ByVal nCurrentFrame As Long)
+Public Event Click(ByVal Button As Long, ByVal KeyFlags As Long, ByVal x As Long, ByVal y As Long)
+Public Event DblClick(ByVal KeyFlags As Long, ByVal x As Long, ByVal y As Long)
+
 Private bEnableEvnts As Boolean 'Per frame events (just frame step for now)
                                 'can interfere with performance
 Public Enum UCGifEx_LoopControl
@@ -118,9 +130,6 @@ Private mActive As Boolean
 
 Private Const DEFAULT_DPI As Single = 96
 Private Const DELAY_TIMER_ID As Long = 1
-Private Const IDR_WICANIMATEDGIF = 103
-Private Const IDM_EXIT  = 105
-Private Const IDM_FILE  = 106
 Private bSizeToFit As Boolean
 Private bPreserveAR As Boolean
 Private bStopFlag As Boolean
@@ -262,6 +271,7 @@ Public Property Get ImageWidth() As Long: Return mcxGifImage: End Property
 Public Property Get ImageHeight() As Long: Return mcyGifImage: End Property
 
 
+[Description("Advanced the gif by a single frame. Must already be paused.")]
 Public Sub AdvanceByOneFrame()
     If bPaused Then
         SetTimer(mhwnd, DELAY_TIMER_ID, mFrameDelay, 0)
@@ -270,20 +280,62 @@ End Sub
 Public Sub StopPlayback()
     bStopFlag = True
 End Sub
+[Description("Restarts animation from the beginning..")]
+Public Sub ResetPlayback()
+    mNextFrameIdx = 0
+End Sub
+[Description("Plays a gif from the resources of the current application using LoadResData.")]
 Public Function DisplayGifFromResource(ByVal id As String, ByVal group As String) As Long
     Dim b() As Byte
     b = LoadResData(id, group)
     Return DisplayGifFromMemory(b)
 End Function
+[Description("Plays a gif from the contents of a byte array containing a full gif file.")]
 Public Function DisplayGifFromMemory(baFile() As Byte) As Long
     If mFileStream IsNot Nothing Then Set mFileStream = Nothing
     maFile = baFile
     CreateStreamOnHGlobal(VarPtr(maFile(0)), CFALSE, mFileStream)
     Return DisplayGifInternal(True)
 End Function
+[Description("Plays a gif from a file on the local computer or network.")]
 Public Function DisplayGifFromFile(ByVal sFile As String) As Long
     mFile = sFile
     Return DisplayGifInternal(False)
+End Function
+[Description("Plays a gif from an internet resource. NOTE: Download is asychronous so this call blocks until download is complete or times out.")]
+Public Function DisplayGifFromURL(ByVal pszUrl As String) As Long
+    Dim hi As LongPtr = InternetOpen("ucAniGif/1.1.3", INTERNET_OPEN_TYPE_PRECONFIG, vbNullString, vbNullString, 0)
+    If hi Then
+        Dim hUrl As LongPtr = InternetOpenUrl(hi, pszUrl, vbNullString, 0, INTERNET_FLAG_NO_CACHE_WRITE Or INTERNET_FLAG_KEEP_CONNECTION, 0)
+        If hUrl Then
+            Dim buf() As Byte
+            Dim data() As Byte
+            Dim cb As Long = 4096
+            Dim cbRead As Long
+            Dim lPos As Long
+            Dim ret As BOOL
+            ReDim buf(cb - 1)
+            ReDim data(0)
+            Do
+                ret = InternetReadFile(hUrl, buf(0), cb, cbRead)
+                If (ret = CTRUE) And (cbRead = 0) Then Exit Do
+                ReDim Preserve data(lPos + (cbRead - 1))
+                CopyMemory data(lPos), buf(0), cbRead
+                lPos += cbRead
+                If GetInputState() Then DoEvents
+            Loop
+            InternetCloseHandle(hUrl)
+            InternetCloseHandle(hi)
+            If UBound(data) Then
+                Return DisplayGifFromMemory(data)
+            End If
+        Else
+            InternetCloseHandle(hi)
+            Return Err.LastDllError
+        End If
+    Else
+        Return Err.LastDllError
+    End If
 End Function
 #End Region
 
@@ -1032,6 +1084,8 @@ Private Function RectHeight(rc As RECT) As Long
     Return rc.Bottom - rc.Top
 End Function
 
+'This static wndproc set is probably not needed in a control, but as they
+'say, 'if it ain't broke don't fix it'.
 Private Function s_WndProc(ByVal phWnd As LongPtr, ByVal uMsg As Long, ByVal wParam As LongPtr, ByVal lParam As LongPtr) As LongPtr
     Dim pThis As ucAniGifEx
     Dim lRet As LongPtr
@@ -1071,7 +1125,16 @@ Public Function ucWndProc(ByVal phWnd As LongPtr, ByVal uMsg As Long, ByVal wPar
     
         Case WM_DISPLAYCHANGE
             InvalidateRect(phWnd, vbNullPtr, CFALSE)
-         
+            
+        Case WM_LBUTTONDOWN
+            RaiseEvent Click(1, CLng(wParam), Get_X_lParam(lParam), Get_Y_lParam(lParam))
+        Case WM_RBUTTONDOWN
+            RaiseEvent Click(2, CLng(wParam), Get_X_lParam(lParam), Get_Y_lParam(lParam))
+        Case WM_MBUTTONDOWN
+            RaiseEvent Click(3, CLng(wParam), Get_X_lParam(lParam), Get_Y_lParam(lParam))
+        
+        Case WM_LBUTTONDBLCLK
+            RaiseEvent DblClick(CLng(wParam), Get_X_lParam(lParam), Get_Y_lParam(lParam))
         Case Else
             Return DefWindowProc(phWnd, uMsg, wParam, lParam)
     End Select

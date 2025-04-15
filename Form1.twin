@@ -12,8 +12,9 @@ Class Form1
     Private Sub File1_DblClick() Handles File1.DblClick
         ' ucAniGifEx1.SizeToFit = True
         ' ucAniGifEx1.BackColor = Me.BackColor
-        Debug.Print "Load " & File1.Path & File1.List(File1.ListIndex)
-        ucAniGifEx1.DisplayGifFromFile(File1.Path & File1.List(File1.ListIndex))
+        ' ucAniGifEx1.PreserveAspectRatio = False
+        Debug.Print "Load " & File1.Path & "\" & File1.List(File1.ListIndex)
+        ucAniGifEx1.DisplayGifFromFile(File1.Path & "\" & File1.List(File1.ListIndex))
     End Sub
     
     Private Sub Command2_Click() Handles Command2.Click
@@ -22,6 +23,22 @@ Class Form1
     
     Private Sub Command3_Click() Handles Command3.Click
         ucAniGifEx1.StopPlayback()
+    End Sub
+    
+    Private Sub Command4_Click() Handles Command4.Click
+        ucAniGifEx1.DisplayGifFromURL("https://i.imgur.com/JJFUxW6.gif")
+    End Sub
+    
+    Private Sub ucAniGifEx1_LoopEnd(ByVal totalPlayed As Long) Handles ucAniGifEx1.LoopEnd
+        Debug.Print "ucAniGifEx1->LoopEnd"
+    End Sub
+    
+    Private Sub ucAniGifEx1_Click(ByVal Button As Long, ByVal KeyFlags As Long, ByVal x As Long, ByVal y As Long) Handles ucAniGifEx1.Click
+        Debug.Print "ucAniGifEx1->Click"
+    End Sub
+    
+    Private Sub Command5_Click() Handles Command5.Click
+        ucAniGifEx1.ResetPlayback()
     End Sub
     
  
