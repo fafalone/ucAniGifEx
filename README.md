@@ -1,4 +1,4 @@
-# ucAniGifEx v1.0.1
+# ucAniGifEx v1.1.3
 ucAniGifEx Animated Gif Control
 
 ![ss](https://github.com/user-attachments/assets/ad8fcf31-6807-4193-9550-4b00f8b19a91)
@@ -9,12 +9,14 @@ ucAniGifEx Animated Gif Control
 
 See [Releases](https://github.com/fafalone/ucAniGifEx/releases) for binaries.
 
-**PROJECT UPDATED:**
+**PROJECT UPDATED:**\
+(v1.1.3, 15 Apr 2025) DisplayGifFromURL, Click/DblClick events, ResetPlayback
+
 (v1.0.1, 09 Apr 2025) Quick fix for various looping issues, see Readme below.
 
 ```
 /********************************************************************************
-    ucAniGifEx v1.0
+    ucAniGifEx v1.1.3
     by Jon Johnson, ported from Windows SDK WicAnimatedGif example, with
          corrections, additional features, and conversion to control.
     (c) 2025. Distributed under the MIT License.
@@ -39,8 +41,10 @@ See [Releases](https://github.com/fafalone/ucAniGifEx/releases) for binaries.
               resources. Specify the ID and group; LoadResData is used.
          DisplayGifFromMemory - Play direct from a byte array containing a 
               complete gif file.
+         DisplayGifFromURL - Play from an http:, https:, or ftp: resource.
       
-      -Paused property can stop/resume playback, StopPlayback command
+      -Paused property can suspend/resume playback, StopPlayback, 
+          ResetPlayback commands.
       
       -Will be transparent to the control BackColor; it's recommended you set
        this before playing, i.e. ucAniGifEx1.BackColor = Me.BackColor, then play.
@@ -61,6 +65,8 @@ See [Releases](https://github.com/fafalone/ucAniGifEx/releases) for binaries.
       
       -FrameCount, FrameIndex, ImageWidth, ImageHeight properties.
     
+      -Supports DPI Aware apps
+      
     Requirements:
       Windows 7 or newer
       
@@ -68,7 +74,13 @@ See [Releases](https://github.com/fafalone/ucAniGifEx/releases) for binaries.
       twinBASIC currently displays a continuable exception error in the IDE. This
       does not seem to be impacting the control. A bug report has been filed.
       
-    Change log:
+    Change log: 
+      (15 Apr 2025, v1.1.3)
+          -Added DisplayGifFromURL to play from http: https: and ftp:
+          -Added Click and DblClick events
+          -Added ResetPlayback method to restart animation from first frame.
+          
+
       (09 Apr 2025, v1.0.1)
           -To match modern browsers, gifs without looping info will only play once.
           -Bug fix: Loop control override not properly implemented.
