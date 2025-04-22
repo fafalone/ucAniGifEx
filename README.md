@@ -3,7 +3,7 @@ ucAniGifEx Animated Gif Control
 
 ![ss](https://github.com/user-attachments/assets/ad8fcf31-6807-4193-9550-4b00f8b19a91)
 
-**ucAniGifExTest.twinproj** - Project with test form shown in the picture above.
+**ucAniGifExTest.twinproj** - Project with test form shown in the picture above. Requires twinBASIC Beta 734 or newer since the gif file list box gives paths with a backslash in prior versions.
 
 **AniGifEx.twinproj** - ActiveX control project to build .ocx versions for VB6/VBA/etc
 
