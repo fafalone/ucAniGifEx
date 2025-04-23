@@ -97,7 +97,7 @@ See [Releases](https://github.com/fafalone/ucAniGifEx/releases) for binaries.
 *********************************************************************************/
 ```
 
-### How install and select for use in VBA
+### How to install and select for use in VBA
 
 #### From binaries
 
