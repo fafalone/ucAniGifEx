@@ -416,11 +416,11 @@ Private Function DisplayGifInternal(ByVal bUseStream As Boolean) As Long
     bPaused = False
     Set mSavedFrame = Nothing
     If bUseStream Then
-        Set mDecoder = mWicFact.CreateDecoderFromStream(mFileStream, vbNullPtr, _ 
+        Set mDecoder = mWicFact.CreateDecoderFromStream(mFileStream, ByVal vbNullPtr, _ 
                                             WICDecodeMetadataCacheOnLoad)
     Else
         If mFileStream IsNot Nothing Then Set mFileStream = Nothing
-        Set mDecoder = mWicFact.CreateDecoderFromFilename(StrPtr(mFile), vbNullPtr, _
+        Set mDecoder = mWicFact.CreateDecoderFromFilename(StrPtr(mFile), ByVal vbNullPtr, _
                                             GENERIC_READ, WICDecodeMetadataCacheOnLoad)
         hr = Err.LastHresult
     End If
@@ -452,7 +452,7 @@ Private Function DisplayGifInternal(ByVal bUseStream As Boolean) As Long
             If mcFrames > 0 Then
                 mActive = True
                 hr = ComposeNextFrame()
-                InvalidateRect(mhwnd, vbNullPtr, CFALSE)
+                InvalidateRect(mhwnd, ByVal vbNullPtr, CFALSE)
             End If
         End If
     End If
@@ -536,7 +536,7 @@ Private Function OverlayNextFrame() As Long
             mFrameComposeRT.Clear(mClrBk)
             mLoopNumber += 1
         End If
-        mFrameComposeRT.DrawBitmap(mRawFrame, mframePosition, 1.0, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR, vbNullPtr)
+        mFrameComposeRT.DrawBitmap(mRawFrame, mframePosition, 1.0, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR, ByVal vbNullPtr)
         mFrameComposeRT.EndDraw(ByVal 0, ByVal 0)
         hr = Err.LastHresult
     End If
@@ -559,14 +559,14 @@ Private Function SaveComposedFrame() As Long
             Dim bitmapProp As D2D1_BITMAP_PROPERTIES
             pFrameToBeSaved.GetDpi(bitmapProp.DpiX, bitmapProp.DpiY)
             bitmapProp.PixelFormat = pFrameToBeSaved.GetPixelFormat()
-        
-            Set mSavedFrame = mFrameComposeRT.CreateBitmap(SizeToLongLong(bitmapSize.width, bitmapSize.Height), _
-                                                                    ByVal 0, 0, bitmapProp)
+            
+            Set mSavedFrame = mFrameComposeRT.CreateBitmap(bitmapSize, _
+                                                        ByVal 0, 0, bitmapProp)
             hr = Err.LastHresult
         End If
     End If
     If SUCCEEDED(hr) Then
-        mSavedFrame.CopyFromBitmap(vbNullPtr, pFrameToBeSaved, vbNullPtr)
+        mSavedFrame.CopyFromBitmap(ByVal vbNullPtr, pFrameToBeSaved, ByVal vbNullPtr)
     End If
     Set pFrameToBeSaved = Nothing
     Return Err.LastHresult
@@ -582,7 +582,7 @@ Private Function RestoreSavedFrame() As Long
         hr = Err.LastHresult
     End If
     If SUCCEEDED(hr) Then
-        pFrameToCopyTo.CopyFromBitmap(vbNullPtr, mSavedFrame, vbNullPtr)
+        pFrameToCopyTo.CopyFromBitmap(ByVal vbNullPtr, mSavedFrame, ByVal vbNullPtr)
     End If
     Return Err.LastHresult
 End Function
@@ -602,7 +602,7 @@ Private Function RecoverDeviceResources() As Long
     If SUCCEEDED(hr) Then
         If mcFrames > 0 Then
             hr = ComposeNextFrame()
-            InvalidateRect(mhwnd, vbNullPtr, CFALSE)
+            InvalidateRect(mhwnd, ByVal vbNullPtr, CFALSE)
         End If
     End If
 
@@ -654,7 +654,7 @@ Private Function CreateDeviceResources() As Long
     If SUCCEEDED(hr) Then
         Set mFrameComposeRT = Nothing
         Set mFrameComposeRT = mhwndRT.CreateCompatibleRenderTarget(D2D1.SizeF(mcxGifImage, mcyGifImage), _
-                                        vbNullPtr, vbNullPtr, D2D1_COMPATIBLE_RENDER_TARGET_OPTIONS_NONE)
+                                       ByVal vbNullPtr, ByVal vbNullPtr, D2D1_COMPATIBLE_RENDER_TARGET_OPTIONS_NONE)
     
         hr = Err.LastHresult
     End If
@@ -802,7 +802,7 @@ Private Function GetRawFrame(ByVal uFrameIndex As Long) As Long
     End If
     If SUCCEEDED(hr) Then
         Set mRawFrame = Nothing
-        Set mRawFrame = mhwndRT.CreateBitmapFromWicBitmap(pConverter, vbNullPtr)
+        Set mRawFrame = mhwndRT.CreateBitmapFromWicBitmap(pConverter, ByVal vbNullPtr)
         hr = Err.LastHresult
     End If
     If SUCCEEDED(hr) Then
@@ -1053,7 +1053,7 @@ Private Function OnRender() As Long
                 OleTranslateColor UserControl.BackColor, 0, clrb
                 mhwndRT.BeginDraw()
                 mhwndRT.Clear(D2D1.ColorF(clrb))
-                mhwndRT.DrawBitmap(pFrameToRender, drawRect, 1.0, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR, vbNullPtr)
+                mhwndRT.DrawBitmap(pFrameToRender, drawRect, 1.0, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR, ByVal vbNullPtr)
                 mhwndRT.EndDraw(ByVal 0, ByVal 0)
                 hr = Err.LastHresult
             End If
@@ -1112,11 +1112,11 @@ Public Function ucWndProc(ByVal phWnd As LongPtr, ByVal uMsg As Long, ByVal wPar
     Select Case uMsg
         Case WM_PAINT
             hr = OnRender()
-            ValidateRect(phWnd, vbNullPtr)
+            ValidateRect(phWnd, ByVal vbNullPtr)
             
         Case WM_TIMER
             hr = ComposeNextFrame()
-            hr = InvalidateRect(phWnd, vbNullPtr, CFALSE)
+            hr = InvalidateRect(phWnd, ByVal vbNullPtr, CFALSE)
             
         Case WM_SIZE
             Dim uWidth As Long = LOWORD(lParam)
@@ -1124,7 +1124,7 @@ Public Function ucWndProc(ByVal phWnd As LongPtr, ByVal uMsg As Long, ByVal wPar
             hr = OnResize(uWidth, uHeight)
     
         Case WM_DISPLAYCHANGE
-            InvalidateRect(phWnd, vbNullPtr, CFALSE)
+            InvalidateRect(phWnd, ByVal vbNullPtr, CFALSE)
             
         Case WM_LBUTTONDOWN
             RaiseEvent Click(1, CLng(wParam), Get_X_lParam(lParam), Get_Y_lParam(lParam))
@@ -1453,21 +1453,21 @@ Private Class D2D1
     Public Function Matrix3x2F_Rotation( _
                     ByVal fAngle As Single, _
                     ByRef tCenter As D2D1_POINT_2F) As D2D1_MATRIX_3X2_F
-        D2D1MakeRotateMatrix fAngle, PointFToLongLong(tCenter.x, tCenter.y), Matrix3x2F_Rotation
+        D2D1MakeRotateMatrix fAngle, tCenter, Matrix3x2F_Rotation
     End Function
 
     Public Function Matrix3x2F_Rotation2( _
                     ByVal fAngle As Single, _
                     ByVal fCenterX As Single, _
                     ByVal fCentery As Single) As D2D1_MATRIX_3X2_F
-        D2D1MakeRotateMatrix fAngle, PointFToLongLong(fCenterX, fCentery), Matrix3x2F_Rotation2
+        D2D1MakeRotateMatrix fAngle, Point2F(fCenterX, fCentery), Matrix3x2F_Rotation2
     End Function
 
     Public Function Matrix3x2F_Skew( _
                     ByVal fAngleX As Single, _
                     ByVal fAngleY As Single, _
                     ByRef tCenter As D2D1_POINT_2F) As D2D1_MATRIX_3X2_F
-        D2D1MakeSkewMatrix fAngleX, fAngleY, PointFToLongLong(tCenter.x, tCenter.y), Matrix3x2F_Skew
+        D2D1MakeSkewMatrix fAngleX, fAngleY, Point2F(tCenter.x, tCenter.y), Matrix3x2F_Skew
     End Function
 
     Public Function Matrix3x2F_Determinant( _
@@ -2072,3 +2072,4 @@ Private Class D2D1
         PixelFormat.AlphaMode = AlphaMode
     End Function
 End Class
+
